@@ -5,10 +5,8 @@
 ## Quick Start
 
 - Download [latest release](https://github.com/riipandi/varlet-mariadb/releases) then run the installation file.
-
+- You need to start the service manually: `net start VarletMariaDB`
 - Default database root password is: `secret`
-
-- You will need to start the service manually: `net start VarletMariaDB`
 
 ## License
 

@@ -143,37 +143,14 @@ begin
   end;
 end;
 
-procedure CreateDatabaseUser;
-var
-  Parameter: String;
-begin
-  Parameter := '-uroot -uroot --skip-password -e "SET PASSWORD FOR ''root''@''localhost'' = PASSWORD(''{#DBRootPassword}'');"'
-  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-
-  Parameter := '-uroot -p{#DBRootPassword} -e "SET PASSWORD FOR ''root''@''127.0.0.1'' = PASSWORD(''{#DBRootPassword}'');"'
-  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-
-  Parameter := '-uroot -p{#DBRootPassword} -e "SET PASSWORD FOR ''root''@''::1'' = PASSWORD(''{#DBRootPassword}'');"'
-  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-
-  Parameter := '-uroot -p{#DBRootPassword} -e "CREATE USER ''root''@''%'' IDENTIFIED BY ''{#DBRootPassword}'';"'
-  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-
-  Parameter := '-uroot -p{#DBRootPassword} -e "DROP DATABASE IF EXISTS test;"'
-  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-
-  Parameter := '-uroot -p{#DBRootPassword} -e "FLUSH PRIVILEGES;"'
-  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-end;
-
 procedure InstallApplicationService;
 var
   InitDBParameter : String;
   ServiceParameter : String;
 begin
-  InitDBParameter := '--defaults-file="'+ExpandConstant('{app}\my.ini')+'" --initialize-insecure';
+  InitDBParameter := '--datadir="'+ExpandConstant('{app}\data')+'" --port="'+DBParameterPage.Values[0]+'" --password="'+ExpandConstant('{#DBRootPassword}')+'"';
   ServiceParameter := '--install-manual "'+ExpandConstant('{#DBServiceName}')+'" --defaults-file="'+ExpandConstant('{app}\my.ini')+'"';
-  if Exec(ExpandConstant('{app}\bin\mysqld.exe'), InitDBParameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then begin
+  if Exec(ExpandConstant('{app}\bin\mysql_install_db.exe'), InitDBParameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then begin
     if not Exec(ExpandConstant('{app}\bin\mysqld.exe'), ServiceParameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then begin
       MsgBox('Failed to creating {#DBServiceName} service!', mbInformation, MB_OK);
     end else if not Exec(ExpandConstant('net.exe'), 'start {#DBServiceName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then begin
@@ -195,13 +172,10 @@ begin
     WizardForm.StatusLabel.Caption := 'Installing application services...';
     InstallApplicationService;
 
-    WizardForm.StatusLabel.Caption := 'Creating database user...';
-    CreateDatabaseUser;
-
     WizardForm.StatusLabel.Caption := 'Creating firewall exception...';
     FirewallAdd('{#AppName}', DBParameterPage.Values[0]);
 
-    if WizardIsTaskSelected('addenvar') then begin
+    if WizardIsTaskSelected('task_add_path_envars') then begin
       WizardForm.StatusLabel.Caption := 'Adding installation dir to PATH...';
       EnvAddPath(ExpandConstant('{app}') +'\bin');
     end;

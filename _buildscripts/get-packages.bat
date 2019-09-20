@@ -34,7 +34,7 @@ if exist "%TMP%\mariadb-%MariaDBversion%.zip" (
     echo. && echo Extracting MariaDB v%MariaDBversion% ...
     if exist "%ODIR%\mariadb" RD /S /Q "%ODIR%\mariadb"
     %UNZIP% x "%TMP%\mariadb-%MariaDBversion%.zip" -o"%ODIR%" -y > nul
-    REM RD /S /Q "%ODIR%\mariadb-%MariaDBversion%-winx64\data"
+    RD /S /Q "%ODIR%\mariadb-%MariaDBversion%-winx64\data"
     ren "%ODIR%\mariadb-%MariaDBversion%-winx64" mariadb
     copy /Y "%STUB%\my.ini" "%ODIR%\mariadb\my.ini" > nul
 )
