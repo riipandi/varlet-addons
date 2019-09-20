@@ -7,7 +7,6 @@
 #define AppPublisher  "Aris Ripandi"
 #define AppWebsite    "https://arisio.us"
 #define AppGithubUrl  "https://github.com/riipandi/varlet-mariadb"
-#define SetupFileName "varlet-mariadb-10.4.8-x64"
 
 #define DBRootPassword  "secret"
 #define DBServiceName   "VarletMariaDB"
@@ -21,7 +20,7 @@ AppPublisherURL            = {#AppWebsite}
 AppSupportURL              = {#AppWebsite}
 AppUpdatesURL              = {#AppWebsite}
 DefaultGroupName           = {#AppName}
-OutputBaseFilename         = {#SetupFileName}
+OutputBaseFilename         = "varlet-mariadb-{#AppVersion}-x64"
 AppCopyright               = Copyright (c) {#AppPublisher}
 ArchitecturesAllowed            = x64
 ArchitecturesInstallIn64BitMode = x64
