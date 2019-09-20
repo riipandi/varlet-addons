@@ -39,7 +39,7 @@ FlatComponentsList         = yes
 
 SetupIconFile         = "setup-icon.ico"
 LicenseFile           = "varlet-license.txt"
-;WizardImageFile       = "setup-img-side.bmp"
+WizardImageFile       = "setup-img-side.bmp"
 WizardSmallImageFile  = "setup-img-top.bmp"
 DefaultDirName        = {sd}\Varlet\mariadb
 UninstallFilesDir     = {app}
