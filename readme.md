@@ -20,4 +20,6 @@ use is also free. Read the [licence file](./license.txt) file for the full Varle
 
 ### MariaDB License
 
-Varlet MariaDB is built upon MariaDB from MariaDB Foundation. See the `COPYING` files accompanying the software distribution.
+Varlet MariaDB is built upon MariaDB from MariaDB Foundation.
+
+See the `COPYING` files accompanying the software distribution.
