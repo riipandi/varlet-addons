@@ -160,6 +160,13 @@ begin
   end;
 end;
 
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = wpLicense then begin
+    WizardForm.NextButton.Caption := '&I agree';
+  end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then begin
