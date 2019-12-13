@@ -48,6 +48,32 @@ if exist "%TMPDIR%\mariadb-%ver_mariadb103%-x86.zip" (
     copy /Y "%STUB%\mariadb.ini" "%ODIR%\mariadb-10.3-x86\my.ini" > nul
 )
 
+:: MariaDB 10.4 x64 ----------------------------------------------------------------------------------------------------
+if not exist "%TMPDIR%\mariadb-%ver_mariadb104%-x64.zip" (
+    echo. && echo ^> Downloading MariaDB v%ver_mariadb104% x64 ... && %CURL% -L# %url_mariadb104_x64% -o "%TMPDIR%\mariadb-%ver_mariadb104%-x64.zip"
+)
+if exist "%TMPDIR%\mariadb-%ver_mariadb104%-x64.zip" (
+    echo. && echo ^> Extracting MariaDB v%ver_mariadb104% x64 ...
+    if exist "%ODIR%\mariadb-10.4-x64" RD /S /Q "%ODIR%\mariadb-10.4-x64"
+    %UNZIP% x "%TMPDIR%\mariadb-%ver_mariadb104%-x64.zip" -o"%ODIR%" -y > nul
+    RD /S /Q "%ODIR%\mariadb-%ver_mariadb104%-winx64\data"
+    ren "%ODIR%\mariadb-%ver_mariadb104%-winx64" mariadb-10.4-x64
+    copy /Y "%STUB%\mariadb.ini" "%ODIR%\mariadb-10.4-x64\my.ini" > nul
+)
+
+:: MariaDB 10.4 x86 ----------------------------------------------------------------------------------------------------
+if not exist "%TMPDIR%\mariadb-%ver_mariadb104%-x86.zip" (
+    echo. && echo ^> Downloading MariaDB v%ver_mariadb104% x86 ... && %CURL% -L# %url_mariadb104_x86% -o "%TMPDIR%\mariadb-%ver_mariadb104%-x86.zip"
+)
+if exist "%TMPDIR%\mariadb-%ver_mariadb104%-x86.zip" (
+    echo. && echo ^> Extracting MariaDB v%ver_mariadb104% x86 ...
+    if exist "%ODIR%\mariadb-10.4-x86" RD /S /Q "%ODIR%\mariadb-10.4-x86"
+    %UNZIP% x "%TMPDIR%\mariadb-%ver_mariadb104%-x86.zip" -o"%ODIR%" -y > nul
+    RD /S /Q "%ODIR%\mariadb-%ver_mariadb104%-win32\data"
+    ren "%ODIR%\mariadb-%ver_mariadb104%-win32" mariadb-10.4-x86
+    copy /Y "%STUB%\mariadb.ini" "%ODIR%\mariadb-10.4-x86\my.ini" > nul
+)
+
 :: Cleanup unused files ------------------------------------------------------------------------------------------------
 echo. && echo Cleanup unused files ... && forfiles /p "%ODIR%" /s /m *.pdb /d -1 /c "cmd /c del /F @file"
 echo All files already downloaded! && echo. && pause
