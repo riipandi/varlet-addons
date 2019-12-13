@@ -1,6 +1,6 @@
 # Varlet Addons
 
-This packages extending Varlet package. It's containing various database engine.
+This packages extending [Varlet](https://github.com/riipandi/varlet) package. It's containing various database engine.
 
 ## Quick Start
 
