@@ -144,13 +144,13 @@ begin
   WizardForm.StatusLabel.Caption := 'Resetting database root password...';
 
   Parameter := '-uroot -e "set password for ''root''@''localhost'' = password('''+DBParameterPage.Values[1]+''');"';
-  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   Parameter := '-uroot -p'''+DBParameterPage.Values[1]+''' -e "set password for ''root''@''127.0.0.1'' = password('''+DBParameterPage.Values[1]+''');"';
-  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   Parameter := '-uroot -p'''+DBParameterPage.Values[1]+''' -e "FLUSH PRIVILEGES";';
-  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 procedure CurPageChanged(CurPageID: Integer);
