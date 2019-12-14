@@ -113,11 +113,14 @@ begin
 end;
 
 procedure InitializeData;
-var InitDBParameter : String;
+var
+  InitDBParameter : String;
+  RootPass : String;
 begin
   WizardForm.StatusLabel.Caption := 'Initializing database...';
   DataDir := ExpandConstant('{#DBDataDirectory}');
-  InitDBParameter := '--datadir="'+DataDir+'" --port="'+DBParameterPage.Values[0]+'" --password="'+ExpandConstant('{#DBRootPassword}')+'"';
+  RootPass := ExpandConstant('{#DBRootPassword}');
+  InitDBParameter := '--datadir="'+DataDir+'" --port="'+DBParameterPage.Values[0]+'" --password="'+RootPass+'"';
   Exec(ExpandConstant('{app}\bin\mysql_install_db.exe'), InitDBParameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
@@ -158,12 +161,10 @@ begin
     FileReplaceString(ExpandConstant('{app}\my.ini'), '<<SERVICE_NAME>>', ExpandConstant('{#DBServiceName}'));
     FileReplaceString(ExpandConstant('{app}\my.ini'), '<<SERVICE_PORT>>', DBParameterPage.Values[0]);
 
-    if DirExists(ExpandConstant('{commonappdata}') + AppFolder) then begin
-      InstallApplicationService;
-    end else begin
-      InitializeData;
-      InstallApplicationService;
-    end;
+    // TODO: fix updater
+    // if not DirExists(ExpandConstant('{#DBDataDirectory}')) then InitializeData;
+    InitializeData;
+    InstallApplicationService;
 
     WizardForm.StatusLabel.Caption := 'Creating firewall exception...';
     FirewallAdd('{#AppName}', DBParameterPage.Values[0]);
