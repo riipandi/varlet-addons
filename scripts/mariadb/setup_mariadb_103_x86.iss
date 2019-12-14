@@ -1,8 +1,8 @@
 ; by Aris Ripandi - 2019
 
-#include '..\include\setup-header.iss'
+#include '..\..\include\setup-header.iss'
 
-#define AppVersion      GetFileVersion('..\_dstdir\mariadb-10.3-x64\bin\mysql.exe')
+#define AppVersion      GetFileVersion('..\..\_dstdir\mariadb-10.3-x86\bin\mysql.exe')
 #define AppName         "Varlet MariaDB 10.3"
 #define DBServiceName   "VarletMariaDB103"
 #define DBRootPassword  "secret"
@@ -13,10 +13,9 @@
 AppName                         = {#AppName}
 AppVersion                      = {#AppVersion}
 DefaultGroupName                = {#AppName}
-OutputBaseFilename              = "varlet-mariadb-{#AppVersion}-x64"
+OutputBaseFilename              = "varlet-mariadb-{#AppVersion}-x86"
 DefaultDirName                  = {code:GetDefaultDir}
-ArchitecturesAllowed            = x64
-ArchitecturesInstallIn64BitMode = x64
+ArchitecturesAllowed            = x86
 
 [Registry]
 Root: HKLM; Subkey: "Software\{#AppPublisher}"; Flags: uninsdeletekeyifempty
@@ -29,7 +28,7 @@ Name: task_add_path_envars; Description: "Add PATH environment variables"
 Name: task_autorun_service; Description: "Run services when Windows starts"
 
 [Files]
-Source: "{#BasePath}_dstdir\mariadb-10.3-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
+Source: "{#BasePath}_dstdir\mariadb-10.3-x86\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
 Source: "{#BasePath}stubs\mariadb.ini"; DestDir: {app}; DestName: "my.ini"; Flags: ignoreversion
 
 [Dirs]
@@ -42,7 +41,7 @@ Type: filesandordirs; Name: "{#DBDataDirectory}"
 ; Programmatic section -------------------------------------------------------------------------------------------------
 ; ----------------------------------------------------------------------------------------------------------------------
 
-#include '..\include\setup-helpers.iss'
+#include '..\..\include\setup-helpers.iss'
 
 [Code]
 const AppRegKey = 'Software\{#AppPublisher}\{#AppName}';

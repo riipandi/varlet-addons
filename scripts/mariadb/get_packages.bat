@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set ROOT=%~dp0..
+set ROOT=%~dp0..\..
 set CURL=%ROOT%\utils\curl.exe
 set UNZIP=%ROOT%\utils\7za.exe
 set TMPDIR=%ROOT%\_tmpdir

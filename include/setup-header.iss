@@ -1,6 +1,6 @@
 ; by Aris Ripandi - 2019
 
-#define BasePath      "..\"
+#define BasePath      "..\..\"
 
 #define AppPublisher  "Aris Ripandi"
 #define AppWebsite    "https://varlet.dev"
