@@ -74,6 +74,6 @@ if exist "%TMPDIR%\mariadb-%ver_mariadb104%-x86.zip" (
     copy /Y "%STUB%\mariadb.ini" "%ODIR%\mariadb-10.4-x86\my.ini" > nul
 )
 
-:: Cleanup unused files ------------------------------------------------------------------------------------------------
-echo. && echo Cleanup unused files ... && forfiles /p "%ODIR%" /s /m *.pdb /d -1 /c "cmd /c del /F @file"
-echo All files already downloaded! && echo. && pause
+:: Cleanup residual files ------------------------------------------------------------------------------------------------
+echo. && echo Cleanup residual files ... && forfiles /p "%ODIR%" /s /m *.pdb /d -1 /c "cmd /c del /F @file"
+echo All files already downloaded! && echo.
