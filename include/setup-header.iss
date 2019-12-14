@@ -36,7 +36,6 @@ AlwaysRestart              = no
 
 [Files]
 ; Main project files ---------------------------------------------------------------------------------------------------
-Source: {#BasePath}license.txt; DestDir: {app}; Flags: ignoreversion
 Source: {#BasePath}_tmpdir\vcredis\vcredis2012x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
 Source: {#BasePath}_tmpdir\vcredis\vcredis1519x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
 

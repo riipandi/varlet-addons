@@ -1,0 +1,25 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compile Inno Setup Scripts",
+            // "dependsOn": "Get Packages",
+            "command": "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe",
+            "type": "process",
+            "args": [
+                "/Qp", "${workspaceFolder}/scripts/setup_mariadb_103_x64.iss"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "clear": true,
+                "focus": true
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

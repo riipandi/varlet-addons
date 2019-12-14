@@ -89,14 +89,20 @@ begin
   CustomLicensePage;
   CreateFooterText('varlet.dev');
   DBParameterPage := CreateInputQueryPage(wpSelectDir,'Database Configuration', 'Adjust the following parameters!', '');
+
   DBParameterPage.Add('Database Port:', False);
   DBParameterPage.Values[0] := '{#DBServicePort}';
   DBParameterPage.Edits[0].Width := 80;
+
+  DBParameterPage.Add('Root Password:', True);
+  DBParameterPage.Values[1] := '{#DBRootPassword}';
+  DBParameterPage.Edits[1].Width := 140;
 end;
 
 procedure RegisterPreviousData(PreviousDataKey: Integer);
 begin
   SetPreviousData(PreviousDataKey, 'Database Port', DBParameterPage.Values[0]);
+  SetPreviousData(PreviousDataKey, 'Root Password', DBParameterPage.Values[1]);
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -104,6 +110,9 @@ begin
   if CurPageID = DBParameterPage.ID then begin
     if DBParameterPage.Values[0] = '' then begin
       MsgBox('Database port must be filled!', mbError, MB_OK);
+      Result := False;
+    end else if DBParameterPage.Values[1] = '' then begin
+      MsgBox('Root password must be filled!', mbError, MB_OK);
       Result := False;
     end else begin
       Result := True;
@@ -119,8 +128,7 @@ var
 begin
   WizardForm.StatusLabel.Caption := 'Initializing database...';
   DataDir := ExpandConstant('{#DBDataDirectory}');
-  RootPass := ExpandConstant('{#DBRootPassword}');
-  InitDBParameter := '--datadir="'+DataDir+'" --port="'+DBParameterPage.Values[0]+'" --password="'+RootPass+'"';
+  InitDBParameter := '--datadir="'+DataDir+'" --port="'+DBParameterPage.Values[0]+'" --password="'+DBParameterPage.Values[1]+'"';
   Exec(ExpandConstant('{app}\bin\mysql_install_db.exe'), InitDBParameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
