@@ -7,7 +7,7 @@
 #define DBServiceName   "VarletPgSQL11"
 #define DBRootPassword  "secret"
 #define DBServicePort   "5432"
-#define DBDataDirectory "{commonappdata}\Varlet\PostgreSQL-11\data"
+#define DBDataDirectory "{commonappdata}\Varlet\PostgreSQL-11"
 
 [Setup]
 AppName                         = {#AppName}
@@ -88,8 +88,6 @@ begin
       Abort;
     end else begin
       if IsServiceRunning('{#DBServiceName}') then KillService('{#DBServiceName}');
-      if IsAppRunning('pgsqld.exe') then TaskKillByPid('pgsqld.exe');
-      if IsAppRunning('pgsql.exe') then TaskKillByPid('pgsql.exe');
     end;
   end;
 end;
@@ -141,30 +139,32 @@ end;
 
 procedure InstallApplicationService;
 begin
-  BinDir  := ExpandConstant('{app}\bin');
-  DataDir  := ExpandConstant('{#DBDataDirectory}');
+  BinDir   := ExpandConstant('{app}\bin');
+  DataDir  := ExpandConstant('{#DBDataDirectory}\data');
   SvcName  := ExpandConstant('#DBServiceName');
   PassFile := ExpandConstant('{tmp}\pgpass.txt');
 
   // Initialize database
   WizardForm.StatusLabel.Caption := 'Initialize database ...';
   SaveStringToFile(PassFile, GetServiceParameter('Password'), True);
-  Parameter := '-U postgres -A password -E utf8 -D "' + DataDir + '" --pwfile="' + PassFile + '"';
+  Parameter := '-D "'+DataDir+'" -U postgres -A password -E utf8 --pwfile="'+PassFile+'"';
   Exec(BinDir + '\initdb.exe', Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
 
   // Edit configuration
   DeleteFile(DataDir + '\pg_hba.conf');
+  if IsAppRunning('mysqld.exe') then TaskKillByPid('pg_ctl.exe');
   WizardForm.StatusLabel.Caption := 'Configuring application service ...';
   FileReplaceString(DataDir + '\postgresql.conf', '#listen_addresses = ''localhost''', 'listen_addresses = ''*''');
   FileReplaceString(DataDir + '\postgresql.conf', '#port = 5432', 'port = ' + GetServiceParameter('Port'));
   SaveStringToFile(DataDir + '\pg_hba.conf', 'host  all  all  0.0.0.0/0  password', True);
-  SaveStringToFile(DataDir + '\pg_hba.conf', #13#11 + 'host  all  all  ::1/118    password', True);
-  SaveStringToFile(DataDir + '\pg_hba.conf', #13#11 + 'host  all  all  ::1/0      password', True);
+  SaveStringToFile(DataDir + '\pg_hba.conf', #13#10 + 'host  all  all  ::1/128    password', True);
+  SaveStringToFile(DataDir + '\pg_hba.conf', #13#10 + 'host  all  all  ::1/0      password', True);
 
   // Install services
   WizardForm.StatusLabel.Caption := 'Registering application service ...';
   Exec(BinDir + '\pg_ctl.exe', 'register -N {#DBServiceName} -D "' + DataDir + '" -S demand', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   Exec(ExpandConstant('net.exe'), 'start {#DBServiceName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  DeleteFile(PassFile);
 end;
 
 procedure CurPageChanged(CurPageID: Integer);
@@ -190,7 +190,6 @@ begin
 
     WizardForm.StatusLabel.Caption := 'Creating firewall exception...';
     FirewallAdd('{#DBServiceName}', GetServiceParameter('Port'));
-    DeleteFile(PassFile);
 
     if WizardIsTaskSelected('task_add_path_envars') then begin
       WizardForm.StatusLabel.Caption := 'Adding installation dir to PATH...';

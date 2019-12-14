@@ -87,8 +87,6 @@ begin
       Abort;
     end else begin
       if IsServiceRunning('{#DBServiceName}') then KillService('{#DBServiceName}');
-      if IsAppRunning('pgsqld.exe') then TaskKillByPid('pgsqld.exe');
-      if IsAppRunning('pgsql.exe') then TaskKillByPid('pgsql.exe');
     end;
   end;
 end;
@@ -140,7 +138,7 @@ end;
 
 procedure InstallApplicationService;
 begin
-  BinDir  := ExpandConstant('{app}\bin');
+  BinDir   := ExpandConstant('{app}\bin');
   DataDir  := ExpandConstant('{#DBDataDirectory}');
   SvcName  := ExpandConstant('#DBServiceName');
   PassFile := ExpandConstant('{tmp}\pgpass.txt');

@@ -88,8 +88,6 @@ begin
       Abort;
     end else begin
       if IsServiceRunning('{#DBServiceName}') then KillService('{#DBServiceName}');
-      if IsAppRunning('pgsqld.exe') then TaskKillByPid('pgsqld.exe');
-      if IsAppRunning('pgsql.exe') then TaskKillByPid('pgsql.exe');
     end;
   end;
 end;
