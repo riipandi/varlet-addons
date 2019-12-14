@@ -2,6 +2,10 @@
 
 This packages extending [Varlet](https://github.com/riipandi/varlet) package. It's containing various database engine.
 
+[![GitHub Releases](https://img.shields.io/github/downloads/riipandi/varlet-addons/total?style=flat-square)](https://github.com/riipandi/varlet-addons/releases/latest)
+[![Apache License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](https://choosealicense.com/licenses/apache-2.0/)
+![Last commit](https://img.shields.io/github/last-commit/riipandi/varlet-addons?style=flat-square)
+
 ## Quick Start
 
 - Download [latest release](https://github.com/riipandi/varlet-addons/releases) and run the installation file.

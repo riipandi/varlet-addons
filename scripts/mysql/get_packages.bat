@@ -24,7 +24,6 @@ set "url_mysql57_x64=https://cdn.mysql.com/Downloads/MySQL-5.7/mysql-%ver_mysql5
 set "url_mysql57_x86=https://cdn.mysql.com/Downloads/MySQL-5.7/mysql-%ver_mysql57%-win32.zip"
 
 set "url_mysql80_x64=https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-%ver_mysql80%-winx64.zip"
-set "url_mysql80_x86=https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-%ver_mysql80%.zip"
 
 :: MySQL 5.6 x64 ----------------------------------------------------------------------------------------------------
 if not exist "%TMPDIR%\mysql-%ver_mysql56%-x64.zip" (
