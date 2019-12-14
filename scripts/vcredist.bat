@@ -18,5 +18,3 @@ if not exist "%TMPDIR%\vcredis\" (
   %CURL% -L# "https://aka.ms/vs/16/release/VC_redist.x86.exe" -o "%TMPDIR%\vcredis\vcredis1519x86.exe"
   %CURL% -L# "https://aka.ms/vs/16/release/VC_redist.x64.exe" -o "%TMPDIR%\vcredis\vcredis1519x64.exe"
 )
-
-pause

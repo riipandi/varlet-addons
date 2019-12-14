@@ -77,9 +77,9 @@ begin
       MsgBox('Installation cancelled!', mbInformation, MB_OK);
       Abort;
     end else begin
-      if IsServiceRunning('VarletMailhog') then KillService('{#DBServiceName}');
-      if IsAppRunning('VarletUi.exe') then TaskKillByPid('mysqld.exe');
-      if IsAppRunning('varlet.exe') then TaskKillByPid('mysql.exe');
+      if IsServiceRunning('{#DBServiceName}') then KillService('{#DBServiceName}');
+      if IsAppRunning('mysqld.exe') then TaskKillByPid('mysqld.exe');
+      if IsAppRunning('mysql.exe') then TaskKillByPid('mysql.exe');
     end;
   end;
 end;

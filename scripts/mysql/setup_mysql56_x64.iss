@@ -2,18 +2,18 @@
 
 #include '..\..\include\setup-header.iss'
 
-#define AppVersion      GetFileVersion('..\..\_dstdir\mariadb-10.3-x64\bin\mysql.exe')
-#define AppName         "Varlet MariaDB 10.3"
-#define DBServiceName   "VarletMariaDB103"
+#define AppVersion      GetFileVersion('..\..\_dstdir\mysql-5.6-x64\bin\mysql.exe')
+#define AppName         "Varlet MySQL 5.6"
+#define DBServiceName   "VarletMySQL56"
 #define DBRootPassword  "secret"
 #define DBServicePort   "3306"
-#define DBDataDirectory "{commonappdata}\Varlet\MariaDB-10.3\data"
+#define DBDataDirectory "{commonappdata}\Varlet\MySQL-5.6"
 
 [Setup]
 AppName                         = {#AppName}
 AppVersion                      = {#AppVersion}
 DefaultGroupName                = {#AppName}
-OutputBaseFilename              = "varlet-mariadb-{#AppVersion}-x64"
+OutputBaseFilename              = "varlet-mysql-{#AppVersion}-x64"
 DefaultDirName                  = {code:GetDefaultDir}
 ArchitecturesAllowed            = x64
 ArchitecturesInstallIn64BitMode = x64
@@ -29,11 +29,13 @@ Name: task_add_path_envars; Description: "Add PATH environment variables"
 Name: task_autorun_service; Description: "Run services when Windows starts"
 
 [Files]
-Source: "{#BasePath}_dstdir\mariadb-10.3-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
-Source: "{#BasePath}stubs\mariadb.ini"; DestDir: {app}; DestName: "my.ini"; Flags: ignoreversion
+Source: "{#BasePath}_dstdir\mysql-5.6-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
+Source: "{#BasePath}_dstdir\mysql-5.6-x64\data\*"; DestDir: "{#DBDataDirectory}\data"; Flags: ignoreversion recursesubdirs
+Source: "{#BasePath}stubs\mysql5.ini"; DestDir: {app}; DestName: "my.ini"; Flags: ignoreversion
 
 [Dirs]
 Name: "{#DBDataDirectory}"; Permissions: users-full;
+Name: "{#DBDataDirectory}\uploads"; Permissions: users-full;
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{#DBDataDirectory}"
@@ -46,11 +48,8 @@ Type: filesandordirs; Name: "{#DBDataDirectory}"
 
 [Code]
 const AppRegKey = 'Software\{#AppPublisher}\{#AppName}';
-const AppFolder = '\Varlet\MariaDB-10.3';
-
-var
-  DataDir: String;
-  DBParameterPage: TInputQueryWizardPage;
+const AppFolder = '\Varlet\MySQL-5.6';
+var DBParameterPage: TInputQueryWizardPage;
 
 function GetDefaultDir(Param: string): string;
 begin
@@ -77,9 +76,9 @@ begin
       MsgBox('Installation cancelled!', mbInformation, MB_OK);
       Abort;
     end else begin
-      if IsServiceRunning('VarletMailhog') then KillService('{#DBServiceName}');
-      if IsAppRunning('VarletUi.exe') then TaskKillByPid('mysqld.exe');
-      if IsAppRunning('varlet.exe') then TaskKillByPid('mysql.exe');
+      if IsServiceRunning('{#DBServiceName}') then KillService('{#DBServiceName}');
+      if IsAppRunning('mysqld.exe') then TaskKillByPid('mysqld.exe');
+      if IsAppRunning('mysql.exe') then TaskKillByPid('mysql.exe');
     end;
   end;
 end;
@@ -121,15 +120,6 @@ begin
     Result := True;
 end;
 
-procedure InitializeData;
-var InitDBParameter : String;
-begin
-  WizardForm.StatusLabel.Caption := 'Initializing database...';
-  DataDir := ExpandConstant('{#DBDataDirectory}');
-  InitDBParameter := '--datadir="'+DataDir+'" --port="'+DBParameterPage.Values[0]+'" --password="'+DBParameterPage.Values[1]+'"';
-  Exec(ExpandConstant('{app}\bin\mysql_install_db.exe'), InitDBParameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-end;
-
 procedure InstallApplicationService;
 var ServiceParameter : String;
 begin
@@ -146,6 +136,19 @@ begin
   end else begin
     Exec(ExpandConstant('sc.exe'), 'config {#DBServiceName} start=demand', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
+end;
+
+procedure ConfigureDatabaseRootPassword;
+var Parameter: String;
+begin
+  WizardForm.StatusLabel.Caption := 'Resetting database root password...';
+  Exec(ExpandConstant('net.exe'), 'stop {#DBServiceName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if IsAppRunning('mysqld.exe') then TaskKillByPid('mysqld.exe');
+  Str := 'SET PASSWORD FOR ''root''@''localhost'' = PASSWORD('''+DBParameterPage.Values[1]+''');';
+  SaveStringToFile(ExpandConstant('{tmp}\mysql_init.txt'), Str, True);
+  Parameter := '--defaults="'+ExpandConstant('{app}\my.ini')+'" --init-file="'+ExpandConstant('{tmp}\mysql_init.txt')+'"';
+  Exec(ExpandConstant('{app}\bin\mysqld.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('net.exe'), 'start {#DBServiceName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 procedure CurPageChanged(CurPageID: Integer);
@@ -167,10 +170,8 @@ begin
     FileReplaceString(ExpandConstant('{app}\my.ini'), '<<SERVICE_NAME>>', ExpandConstant('{#DBServiceName}'));
     FileReplaceString(ExpandConstant('{app}\my.ini'), '<<SERVICE_PORT>>', DBParameterPage.Values[0]);
 
-    // TODO: fix updater
-    // if not DirExists(ExpandConstant('{#DBDataDirectory}')) then InitializeData;
-    InitializeData;
     InstallApplicationService;
+    ConfigureDatabaseRootPassword;
 
     WizardForm.StatusLabel.Caption := 'Creating firewall exception...';
     FirewallAdd('{#AppName}', DBParameterPage.Values[0]);
