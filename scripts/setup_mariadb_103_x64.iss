@@ -122,9 +122,7 @@ begin
 end;
 
 procedure InitializeData;
-var
-  InitDBParameter : String;
-  RootPass : String;
+var InitDBParameter : String;
 begin
   WizardForm.StatusLabel.Caption := 'Initializing database...';
   DataDir := ExpandConstant('{#DBDataDirectory}');
