@@ -29,6 +29,6 @@ echo. && call "%PWD%\scripts\pgsql\get_packages.bat"
 "%programfiles(x86)%\Inno Setup 6\ISCC.exe" /Qp "%PWD%\scripts\pgsql\setup_pgsql_10_x86.iss"
 
 "%programfiles(x86)%\Inno Setup 6\ISCC.exe" /Qp "%PWD%\scripts\pgsql\setup_pgsql_11_x64.iss"
-"%programfiles(x86)%\Inno Setup 6\ISCC.exe" /Qp "%PWD%\scripts\pgsql\setup_pgsql_12_x86.iss"
+"%programfiles(x86)%\Inno Setup 6\ISCC.exe" /Qp "%PWD%\scripts\pgsql\setup_pgsql_12_x64.iss"
 
 echo. && pause && echo.
