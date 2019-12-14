@@ -2,7 +2,7 @@
 
 #include '..\..\include\setup-header.iss'
 
-#define AppVersion      GetFileVersion('..\..\_dstdir\mysql-5.6-x86\bin\mysql.exe')
+#define AppVersion      GetFileVersion('..\..\_dstdir\mysql-5.6-x64\bin\mysql.exe')
 #define AppName         "Varlet MySQL 5.6"
 #define DBServiceName   "VarletMySQL56"
 #define DBRootPassword  "secret"
@@ -13,9 +13,10 @@
 AppName                         = {#AppName}
 AppVersion                      = {#AppVersion}
 DefaultGroupName                = {#AppName}
-OutputBaseFilename              = "varlet-mysql-{#AppVersion}-x86"
+OutputBaseFilename              = "varlet-mysql-{#AppVersion}-x64"
 DefaultDirName                  = {code:GetDefaultDir}
-ArchitecturesAllowed            = x86
+ArchitecturesAllowed            = x64
+ArchitecturesInstallIn64BitMode = x64
 
 [Registry]
 Root: HKLM; Subkey: "Software\{#AppPublisher}"; Flags: uninsdeletekeyifempty
@@ -28,9 +29,17 @@ Name: task_add_path_envars; Description: "Add PATH environment variables"
 Name: task_autorun_service; Description: "Run services when Windows starts"
 
 [Files]
-Source: "{#BasePath}_dstdir\mysql-5.6-x86\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
-Source: "{#BasePath}_dstdir\mysql-5.6-x86\data\*"; DestDir: "{#DBDataDirectory}\data"; Flags: ignoreversion recursesubdirs
+Source: {#BasePath}_tmpdir\vcredis\vcredis2010x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis2012x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis1519x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: "{#BasePath}_dstdir\mysql-5.6-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
+Source: "{#BasePath}_dstdir\mysql-5.6-x64\data\*"; DestDir: "{#DBDataDirectory}\data"; Flags: ignoreversion recursesubdirs
 Source: "{#BasePath}stubs\mysql5.ini"; DestDir: {app}; DestName: "my.ini"; Flags: ignoreversion
+
+[Run]
+Filename: "{tmp}\vcredis2010x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2010"; Flags: waituntilterminated; Check: VCRedist2010NotInstalled
+Filename: "{tmp}\vcredis2012x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2012"; Flags: waituntilterminated; Check: VCRedist2012NotInstalled
+Filename: "{tmp}\vcredis1519x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2015"; Flags: waituntilterminated; Check: VCRedist2015NotInstalled
 
 [Dirs]
 Name: "{#DBDataDirectory}"; Permissions: users-full;

@@ -32,6 +32,11 @@ Name: task_autorun_service; Description: "Run services when Windows starts"
 Source: "{#BasePath}_dstdir\mariadb-10.4-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
 Source: "{#BasePath}stubs\mariadb.ini"; DestDir: {app}; DestName: "my.ini"; Flags: ignoreversion
 
+[Run]
+Filename: "{tmp}\vcredis2010x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2010"; Flags: waituntilterminated; Check: VCRedist2010NotInstalled
+Filename: "{tmp}\vcredis2012x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2012"; Flags: waituntilterminated; Check: VCRedist2012NotInstalled
+Filename: "{tmp}\vcredis1519x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2015"; Flags: waituntilterminated; Check: VCRedist2015NotInstalled
+
 [Dirs]
 Name: "{#DBDataDirectory}"; Permissions: users-full;
 

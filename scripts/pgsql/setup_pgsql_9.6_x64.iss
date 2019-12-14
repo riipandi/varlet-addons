@@ -2,20 +2,21 @@
 
 #include '..\..\include\setup-header.iss'
 
-#define AppVersion      GetFileVersion('..\..\_dstdir\mariadb-10.3-x86\bin\mysql.exe')
-#define AppName         "Varlet MariaDB 10.3"
-#define DBServiceName   "VarletMariaDB103"
+#define AppVersion      GetFileVersion('..\..\_dstdir\pgsql-9.6-x64\bin\psql.exe')
+#define AppName         "Varlet PostgreSQL 9.6"
+#define DBServiceName   "VarletPgSQL96"
 #define DBRootPassword  "secret"
-#define DBServicePort   "3306"
-#define DBDataDirectory "{commonappdata}\Varlet\MariaDB-10.3\data"
+#define DBServicePort   "5432"
+#define DBDataDirectory "{commonappdata}\Varlet\PostgreSQL-9.6\data"
 
 [Setup]
 AppName                         = {#AppName}
 AppVersion                      = {#AppVersion}
 DefaultGroupName                = {#AppName}
-OutputBaseFilename              = "varlet-mariadb-{#AppVersion}-x86"
+OutputBaseFilename              = "varlet-pgsql-{#AppVersion}-x64"
 DefaultDirName                  = {code:GetDefaultDir}
-ArchitecturesAllowed            = x86
+ArchitecturesAllowed            = x64
+ArchitecturesInstallIn64BitMode = x64
 
 [Registry]
 Root: HKLM; Subkey: "Software\{#AppPublisher}"; Flags: uninsdeletekeyifempty
@@ -28,8 +29,15 @@ Name: task_add_path_envars; Description: "Add PATH environment variables"
 Name: task_autorun_service; Description: "Run services when Windows starts"
 
 [Files]
-Source: "{#BasePath}_dstdir\mariadb-10.3-x86\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
-Source: "{#BasePath}stubs\mariadb.ini"; DestDir: {app}; DestName: "my.ini"; Flags: ignoreversion
+Source: {#BasePath}_tmpdir\vcredis\vcredis2010x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis2012x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis1519x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: "{#BasePath}_dstdir\pgsql-9.6-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
+
+[Run]
+Filename: "{tmp}\vcredis2010x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2010"; Flags: waituntilterminated; Check: VCRedist2010NotInstalled
+Filename: "{tmp}\vcredis2012x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2012"; Flags: waituntilterminated; Check: VCRedist2012NotInstalled
+Filename: "{tmp}\vcredis1519x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2015"; Flags: waituntilterminated; Check: VCRedist2015NotInstalled
 
 [Dirs]
 Name: "{#DBDataDirectory}"; Permissions: users-full;
@@ -45,11 +53,14 @@ Type: filesandordirs; Name: "{#DBDataDirectory}"
 
 [Code]
 const AppRegKey = 'Software\{#AppPublisher}\{#AppName}';
-const AppFolder = '\Varlet\MariaDB-10.3';
-
+const AppFolder = '\Varlet\PostgreSQL-9.6';
 var
-  DataDir: String;
   DBParameterPage: TInputQueryWizardPage;
+  BinDir : String;
+  DataDir : String;
+  PassFile : String;
+  Parameter : String;
+  SvcName : String;
 
 function GetDefaultDir(Param: string): string;
 begin
@@ -77,8 +88,8 @@ begin
       Abort;
     end else begin
       if IsServiceRunning('{#DBServiceName}') then KillService('{#DBServiceName}');
-      if IsAppRunning('mysqld.exe') then TaskKillByPid('mysqld.exe');
-      if IsAppRunning('mysql.exe') then TaskKillByPid('mysql.exe');
+      if IsAppRunning('pgsqld.exe') then TaskKillByPid('pgsqld.exe');
+      if IsAppRunning('pgsql.exe') then TaskKillByPid('pgsql.exe');
     end;
   end;
 end;
@@ -120,31 +131,40 @@ begin
     Result := True;
 end;
 
-procedure InitializeData;
-var InitDBParameter : String;
+function GetServiceParameter(Param: String): String;
 begin
-  WizardForm.StatusLabel.Caption := 'Initializing database...';
-  DataDir := ExpandConstant('{#DBDataDirectory}');
-  InitDBParameter := '--datadir="'+DataDir+'" --port="'+DBParameterPage.Values[0]+'" --password="'+DBParameterPage.Values[1]+'"';
-  Exec(ExpandConstant('{app}\bin\mysql_install_db.exe'), InitDBParameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if Param = 'Port' then
+    Result := DBParameterPage.Values[0]
+  else if Param = 'Password' then
+    Result := DBParameterPage.Values[1];
 end;
 
 procedure InstallApplicationService;
-var ServiceParameter : String;
 begin
-  WizardForm.StatusLabel.Caption := 'Installing application services...';
-  ServiceParameter := '--install-manual "'+ExpandConstant('{#DBServiceName}')+'" --defaults-file="'+ExpandConstant('{app}\my.ini')+'"';
-  if not Exec(ExpandConstant('{app}\bin\mysqld.exe'), ServiceParameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then begin
-    MsgBox('Failed to creating {#DBServiceName} service!', mbInformation, MB_OK);
-  end else if not Exec(ExpandConstant('net.exe'), 'start {#DBServiceName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then begin
-    MsgBox('Failed starting {#DBServiceName} service!', mbInformation, MB_OK);
-  end;
+  BinDir  := ExpandConstant('{app}\bin');
+  DataDir  := ExpandConstant('{#DBDataDirectory}');
+  SvcName  := ExpandConstant('#DBServiceName');
+  PassFile := ExpandConstant('{tmp}\pgpass.txt');
 
-  if WizardIsTaskSelected('task_autorun_service') then begin
-    Exec(ExpandConstant('sc.exe'), 'config {#DBServiceName} start=auto', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  end else begin
-    Exec(ExpandConstant('sc.exe'), 'config {#DBServiceName} start=demand', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  end;
+  // Initialize database
+  WizardForm.StatusLabel.Caption := 'Initialize database ...';
+  SaveStringToFile(PassFile, GetServiceParameter('Password'), True);
+  Parameter := '-U postgres -A password -E utf8 -D "' + DataDir + '" --pwfile="' + PassFile + '"';
+  Exec(BinDir + '\initdb.exe', Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
+
+  // Edit configuration
+  DeleteFile(DataDir + '\pg_hba.conf');
+  WizardForm.StatusLabel.Caption := 'Configuring application service ...';
+  FileReplaceString(DataDir + '\postgresql.conf', '#listen_addresses = ''localhost''', 'listen_addresses = ''*''');
+  FileReplaceString(DataDir + '\postgresql.conf', '#port = 5432', 'port = ' + GetServiceParameter('Port'));
+  SaveStringToFile(DataDir + '\pg_hba.conf', 'host  all  all  0.0.0.0/0  password', True);
+  SaveStringToFile(DataDir + '\pg_hba.conf', #13#10 + 'host  all  all  ::1/128    password', True);
+  SaveStringToFile(DataDir + '\pg_hba.conf', #13#10 + 'host  all  all  ::1/0      password', True);
+
+  // Install services
+  WizardForm.StatusLabel.Caption := 'Registering application service ...';
+  Exec(BinDir + '\pg_ctl.exe', 'register -N {#DBServiceName} -D "' + DataDir + '" -S demand', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('net.exe'), 'start {#DBServiceName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 procedure CurPageChanged(CurPageID: Integer);
@@ -161,18 +181,16 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then begin
     WizardForm.StatusLabel.Caption := 'Configuring application...';
-    FileReplaceString(ExpandConstant('{app}\my.ini'), '<<DATA_DIR>>', PathWithSlashes(ExpandConstant('{#DBDataDirectory}')));
-    FileReplaceString(ExpandConstant('{app}\my.ini'), '<<INSTALL_DIR>>', PathWithSlashes(ExpandConstant('{app}')));
-    FileReplaceString(ExpandConstant('{app}\my.ini'), '<<SERVICE_NAME>>', ExpandConstant('{#DBServiceName}'));
-    FileReplaceString(ExpandConstant('{app}\my.ini'), '<<SERVICE_PORT>>', DBParameterPage.Values[0]);
-
-    // TODO: fix updater
-    // if not DirExists(ExpandConstant('{#DBDataDirectory}')) then InitializeData;
-    InitializeData;
     InstallApplicationService;
+    if WizardIsTaskSelected('task_autorun_service') then begin
+      Exec(ExpandConstant('sc.exe'), 'config {#DBServiceName} start=auto', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    end else begin
+      Exec(ExpandConstant('sc.exe'), 'config {#DBServiceName} start=demand', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    end;
 
     WizardForm.StatusLabel.Caption := 'Creating firewall exception...';
-    FirewallAdd('{#AppName}', DBParameterPage.Values[0]);
+    FirewallAdd('{#DBServiceName}', GetServiceParameter('Port'));
+    DeleteFile(PassFile);
 
     if WizardIsTaskSelected('task_add_path_envars') then begin
       WizardForm.StatusLabel.Caption := 'Adding installation dir to PATH...';

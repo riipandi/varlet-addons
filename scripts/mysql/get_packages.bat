@@ -107,11 +107,11 @@ if exist "%TMPDIR%\mysql-%ver_mysql80%-x64.zip" (
 )
 
 :: Cleanup residual files ------------------------------------------------------------------------------------------------
-echo. && echo Cleanup residual files ...
+echo. && echo ^> Cleanup residual files ...
 forfiles /p "%ODIR%" /s /m *.pdb /d -1 /c "cmd /c del /F @file"
 forfiles /p "%ODIR%\mysql-5.6-x64\lib" /s /m *.lib /d -1 /c "cmd /c del /F @file"
 forfiles /p "%ODIR%\mysql-5.6-x86\lib" /s /m *.lib /d -1 /c "cmd /c del /F @file"
 forfiles /p "%ODIR%\mysql-5.7-x64\lib" /s /m *.lib /d -1 /c "cmd /c del /F @file"
 forfiles /p "%ODIR%\mysql-5.7-x86\lib" /s /m *.lib /d -1 /c "cmd /c del /F @file"
 forfiles /p "%ODIR%\mysql-8.0-x64\lib" /s /m *.lib /d -1 /c "cmd /c del /F @file"
-echo All files already downloaded! && echo.
+echo ^> All files already downloaded! && echo.

@@ -75,5 +75,5 @@ if exist "%TMPDIR%\mariadb-%ver_mariadb104%-x86.zip" (
 )
 
 :: Cleanup residual files ------------------------------------------------------------------------------------------------
-echo. && echo Cleanup residual files ... && forfiles /p "%ODIR%" /s /m *.pdb /d -1 /c "cmd /c del /F @file"
-echo All files already downloaded! && echo.
+echo. && echo ^> Cleanup residual files ... && forfiles /p "%ODIR%" /s /m *.pdb /d -1 /c "cmd /c del /F @file"
+echo ^> All files already downloaded! && echo.

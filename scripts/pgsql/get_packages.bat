@@ -112,6 +112,6 @@ if exist "%TMPDIR%\pgsql-%ver_pgsql12%-x64.zip" (
 )
 
 :: Cleanup residual files ------------------------------------------------------------------------------------------------
-echo. && echo Cleanup residual files ...
+echo. && echo ^> Cleanup residual files ...
 REM forfiles /p "%ODIR%" /s /m *.pdb /d -1 /c "cmd /c del /F @file"
-echo. && echo All files already downloaded! && echo.
+echo. && echo ^> All files already downloaded! && echo.

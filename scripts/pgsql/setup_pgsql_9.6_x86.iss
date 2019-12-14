@@ -2,21 +2,20 @@
 
 #include '..\..\include\setup-header.iss'
 
-#define AppVersion      GetFileVersion('..\..\_dstdir\pgsql-12-x64\bin\psql.exe')
-#define AppName         "Varlet PostgreSQL 12"
-#define DBServiceName   "VarletPgSQL12"
+#define AppVersion      GetFileVersion('..\..\_dstdir\pgsql-9.6-x86\bin\psql.exe')
+#define AppName         "Varlet PostgreSQL 9.6"
+#define DBServiceName   "VarletPgSQL96"
 #define DBRootPassword  "secret"
 #define DBServicePort   "5432"
-#define DBDataDirectory "{commonappdata}\Varlet\PostgreSQL-12\data"
+#define DBDataDirectory "{commonappdata}\Varlet\PostgreSQL-9.6\data"
 
 [Setup]
 AppName                         = {#AppName}
 AppVersion                      = {#AppVersion}
 DefaultGroupName                = {#AppName}
-OutputBaseFilename              = "varlet-pgsql-{#AppVersion}-x64"
+OutputBaseFilename              = "varlet-pgsql-{#AppVersion}-x86"
 DefaultDirName                  = {code:GetDefaultDir}
-ArchitecturesAllowed            = x64
-ArchitecturesInstallIn64BitMode = x64
+ArchitecturesAllowed            = x86
 
 [Registry]
 Root: HKLM; Subkey: "Software\{#AppPublisher}"; Flags: uninsdeletekeyifempty
@@ -29,15 +28,15 @@ Name: task_add_path_envars; Description: "Add PATH environment variables"
 Name: task_autorun_service; Description: "Run services when Windows starts"
 
 [Files]
-Source: {#BasePath}_tmpdir\vcredis\vcredis2010x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
-Source: {#BasePath}_tmpdir\vcredis\vcredis2012x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
-Source: {#BasePath}_tmpdir\vcredis\vcredis1519x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
-Source: "{#BasePath}_dstdir\pgsql-12-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
+Source: {#BasePath}_tmpdir\vcredis\vcredis2010x86.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis2012x86.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis1519x86.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: "{#BasePath}_dstdir\pgsql-9.6-x86\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
 
 [Run]
-Filename: "{tmp}\vcredis2010x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2010"; Flags: waituntilterminated; Check: VCRedist2010NotInstalled
-Filename: "{tmp}\vcredis2012x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2012"; Flags: waituntilterminated; Check: VCRedist2012NotInstalled
-Filename: "{tmp}\vcredis1519x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2015"; Flags: waituntilterminated; Check: VCRedist2015NotInstalled
+Filename: "{tmp}\vcredis2010x86.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2010"; Flags: waituntilterminated; Check: VCRedist2010NotInstalled
+Filename: "{tmp}\vcredis2012x86.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2012"; Flags: waituntilterminated; Check: VCRedist2012NotInstalled
+Filename: "{tmp}\vcredis1519x86.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2015"; Flags: waituntilterminated; Check: VCRedist2015NotInstalled
 
 [Dirs]
 Name: "{#DBDataDirectory}"; Permissions: users-full;
@@ -53,7 +52,7 @@ Type: filesandordirs; Name: "{#DBDataDirectory}"
 
 [Code]
 const AppRegKey = 'Software\{#AppPublisher}\{#AppName}';
-const AppFolder = '\Varlet\PostgreSQL-12';
+const AppFolder = '\Varlet\PostgreSQL-9.6';
 var
   DBParameterPage: TInputQueryWizardPage;
   BinDir : String;
@@ -158,8 +157,8 @@ begin
   FileReplaceString(DataDir + '\postgresql.conf', '#listen_addresses = ''localhost''', 'listen_addresses = ''*''');
   FileReplaceString(DataDir + '\postgresql.conf', '#port = 5432', 'port = ' + GetServiceParameter('Port'));
   SaveStringToFile(DataDir + '\pg_hba.conf', 'host  all  all  0.0.0.0/0  password', True);
-  SaveStringToFile(DataDir + '\pg_hba.conf', #13#12 + 'host  all  all  ::1/128    password', True);
-  SaveStringToFile(DataDir + '\pg_hba.conf', #13#12 + 'host  all  all  ::1/0      password', True);
+  SaveStringToFile(DataDir + '\pg_hba.conf', #13#10 + 'host  all  all  ::1/128    password', True);
+  SaveStringToFile(DataDir + '\pg_hba.conf', #13#10 + 'host  all  all  ::1/0      password', True);
 
   // Install services
   WizardForm.StatusLabel.Caption := 'Registering application service ...';

@@ -29,7 +29,15 @@ Name: task_add_path_envars; Description: "Add PATH environment variables"
 Name: task_autorun_service; Description: "Run services when Windows starts"
 
 [Files]
+Source: {#BasePath}_tmpdir\vcredis\vcredis2010x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis2012x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis1519x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
 Source: "{#BasePath}_dstdir\pgsql-11-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
+
+[Run]
+Filename: "{tmp}\vcredis2010x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2010"; Flags: waituntilterminated; Check: VCRedist2010NotInstalled
+Filename: "{tmp}\vcredis2012x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2012"; Flags: waituntilterminated; Check: VCRedist2012NotInstalled
+Filename: "{tmp}\vcredis1519x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2015"; Flags: waituntilterminated; Check: VCRedist2015NotInstalled
 
 [Dirs]
 Name: "{#DBDataDirectory}"; Permissions: users-full;

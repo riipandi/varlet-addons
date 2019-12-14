@@ -2,12 +2,12 @@
 
 #include '..\..\include\setup-header.iss'
 
-#define AppVersion      GetFileVersion('..\..\_dstdir\mysql-5.6-x64\bin\mysql.exe')
-#define AppName         "Varlet MySQL 5.6"
-#define DBServiceName   "VarletMySQL56"
+#define AppVersion      GetFileVersion('..\..\_dstdir\mysql-8.0-x64\bin\mysql.exe')
+#define AppName         "Varlet MySQL 8.0"
+#define DBServiceName   "VarletMySQL80"
 #define DBRootPassword  "secret"
 #define DBServicePort   "3306"
-#define DBDataDirectory "{commonappdata}\Varlet\MySQL-5.6"
+#define DBDataDirectory "{commonappdata}\Varlet\MySQL-8.0"
 
 [Setup]
 AppName                         = {#AppName}
@@ -29,9 +29,16 @@ Name: task_add_path_envars; Description: "Add PATH environment variables"
 Name: task_autorun_service; Description: "Run services when Windows starts"
 
 [Files]
-Source: "{#BasePath}_dstdir\mysql-5.6-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
-Source: "{#BasePath}_dstdir\mysql-5.6-x64\data\*"; DestDir: "{#DBDataDirectory}\data"; Flags: ignoreversion recursesubdirs
-Source: "{#BasePath}stubs\mysql5.ini"; DestDir: {app}; DestName: "my.ini"; Flags: ignoreversion
+Source: {#BasePath}_tmpdir\vcredis\vcredis2010x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis2012x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis1519x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: "{#BasePath}_dstdir\mysql-8.0-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
+Source: "{#BasePath}stubs\mysql8.ini"; DestDir: {app}; DestName: "my.ini"; Flags: ignoreversion
+
+[Run]
+Filename: "{tmp}\vcredis2010x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2010"; Flags: waituntilterminated; Check: VCRedist2010NotInstalled
+Filename: "{tmp}\vcredis2012x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2012"; Flags: waituntilterminated; Check: VCRedist2012NotInstalled
+Filename: "{tmp}\vcredis1519x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2015"; Flags: waituntilterminated; Check: VCRedist2015NotInstalled
 
 [Dirs]
 Name: "{#DBDataDirectory}"; Permissions: users-full;
@@ -48,7 +55,7 @@ Type: filesandordirs; Name: "{#DBDataDirectory}"
 
 [Code]
 const AppRegKey = 'Software\{#AppPublisher}\{#AppName}';
-const AppFolder = '\Varlet\MySQL-5.6';
+const AppFolder = '\Varlet\MySQL-8.0';
 var DBParameterPage: TInputQueryWizardPage;
 
 function GetDefaultDir(Param: string): string;
@@ -120,6 +127,14 @@ begin
     Result := True;
 end;
 
+procedure InitializeData;
+var InitDBParameter : String;
+begin
+  WizardForm.StatusLabel.Caption := 'Initializing database...';
+  InitDBParameter := '--defaults-file="'+ExpandConstant('{app}\my.ini')+'" --initialize-insecure';
+  Exec(ExpandConstant('{app}\bin\mysqld.exe'), InitDBParameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
 procedure InstallApplicationService;
 var ServiceParameter : String;
 begin
@@ -143,10 +158,10 @@ var Parameter: String;
 begin
   WizardForm.StatusLabel.Caption := 'Resetting database root password...';
 
-  Parameter := '-uroot -e "set password for ''root''@''localhost'' = password('''+DBParameterPage.Values[1]+''');"';
+  Parameter := '-uroot -e "ALTER USER ''root''@''localhost'' IDENTIFIED BY '''+DBParameterPage.Values[1]+''';"';
   Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
-  Parameter := '-uroot -p'''+DBParameterPage.Values[1]+''' -e "set password for ''root''@''127.0.0.1'' = password('''+DBParameterPage.Values[1]+''');"';
+  Parameter := '-uroot -p'''+DBParameterPage.Values[1]+''' -e "ALTER USER ''root''@''127.0.0.1'' IDENTIFIED BY '''+DBParameterPage.Values[1]+''';"';
   Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   Parameter := '-uroot -p'''+DBParameterPage.Values[1]+''' -e "FLUSH PRIVILEGES";';
@@ -172,6 +187,7 @@ begin
     FileReplaceString(ExpandConstant('{app}\my.ini'), '<<SERVICE_NAME>>', ExpandConstant('{#DBServiceName}'));
     FileReplaceString(ExpandConstant('{app}\my.ini'), '<<SERVICE_PORT>>', DBParameterPage.Values[0]);
 
+    InitializeData;
     InstallApplicationService;
     ConfigureDatabaseRootPassword;
 

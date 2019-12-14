@@ -2,18 +2,18 @@
 
 #include '..\..\include\setup-header.iss'
 
-#define AppVersion      GetFileVersion('..\..\_dstdir\mariadb-10.3-x64\bin\mysql.exe')
-#define AppName         "Varlet MariaDB 10.3"
-#define DBServiceName   "VarletMariaDB103"
+#define AppVersion      GetFileVersion('..\..\_dstdir\mysql-5.7-x64\bin\mysql.exe')
+#define AppName         "Varlet MySQL 5.7"
+#define DBServiceName   "VarletMySQL57"
 #define DBRootPassword  "secret"
 #define DBServicePort   "3306"
-#define DBDataDirectory "{commonappdata}\Varlet\MariaDB-10.3\data"
+#define DBDataDirectory "{commonappdata}\Varlet\MySQL-5.7"
 
 [Setup]
 AppName                         = {#AppName}
 AppVersion                      = {#AppVersion}
 DefaultGroupName                = {#AppName}
-OutputBaseFilename              = "varlet-mariadb-{#AppVersion}-x64"
+OutputBaseFilename              = "varlet-mysql-{#AppVersion}-x64"
 DefaultDirName                  = {code:GetDefaultDir}
 ArchitecturesAllowed            = x64
 ArchitecturesInstallIn64BitMode = x64
@@ -29,11 +29,20 @@ Name: task_add_path_envars; Description: "Add PATH environment variables"
 Name: task_autorun_service; Description: "Run services when Windows starts"
 
 [Files]
-Source: "{#BasePath}_dstdir\mariadb-10.3-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
-Source: "{#BasePath}stubs\mariadb.ini"; DestDir: {app}; DestName: "my.ini"; Flags: ignoreversion
+Source: {#BasePath}_tmpdir\vcredis\vcredis2010x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis2012x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: {#BasePath}_tmpdir\vcredis\vcredis1519x64.exe; DestDir: {tmp}; Flags: ignoreversion deleteafterinstall
+Source: "{#BasePath}_dstdir\mysql-5.7-x64\*"; DestDir: {app}; Flags: ignoreversion recursesubdirs
+Source: "{#BasePath}stubs\mysql5.ini"; DestDir: {app}; DestName: "my.ini"; Flags: ignoreversion
+
+[Run]
+Filename: "{tmp}\vcredis2010x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2010"; Flags: waituntilterminated; Check: VCRedist2010NotInstalled
+Filename: "{tmp}\vcredis2012x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2012"; Flags: waituntilterminated; Check: VCRedist2012NotInstalled
+Filename: "{tmp}\vcredis1519x64.exe"; Parameters: "/install /quiet /norestart"; Description: "Installing VCRedist 2015"; Flags: waituntilterminated; Check: VCRedist2015NotInstalled
 
 [Dirs]
 Name: "{#DBDataDirectory}"; Permissions: users-full;
+Name: "{#DBDataDirectory}\uploads"; Permissions: users-full;
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{#DBDataDirectory}"
@@ -46,11 +55,8 @@ Type: filesandordirs; Name: "{#DBDataDirectory}"
 
 [Code]
 const AppRegKey = 'Software\{#AppPublisher}\{#AppName}';
-const AppFolder = '\Varlet\MariaDB-10.3';
-
-var
-  DataDir: String;
-  DBParameterPage: TInputQueryWizardPage;
+const AppFolder = '\Varlet\MySQL-5.7';
+var DBParameterPage: TInputQueryWizardPage;
 
 function GetDefaultDir(Param: string): string;
 begin
@@ -125,9 +131,8 @@ procedure InitializeData;
 var InitDBParameter : String;
 begin
   WizardForm.StatusLabel.Caption := 'Initializing database...';
-  DataDir := ExpandConstant('{#DBDataDirectory}');
-  InitDBParameter := '--datadir="'+DataDir+'" --port="'+DBParameterPage.Values[0]+'" --password="'+DBParameterPage.Values[1]+'"';
-  Exec(ExpandConstant('{app}\bin\mysql_install_db.exe'), InitDBParameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  InitDBParameter := '--defaults-file="'+ExpandConstant('{app}\my.ini')+'" --initialize-insecure';
+  Exec(ExpandConstant('{app}\bin\mysqld.exe'), InitDBParameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 procedure InstallApplicationService;
@@ -146,6 +151,21 @@ begin
   end else begin
     Exec(ExpandConstant('sc.exe'), 'config {#DBServiceName} start=demand', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
+end;
+
+procedure ConfigureDatabaseRootPassword;
+var Parameter: String;
+begin
+  WizardForm.StatusLabel.Caption := 'Resetting database root password...';
+
+  Parameter := '-uroot -e "ALTER USER ''root''@''localhost'' IDENTIFIED BY '''+DBParameterPage.Values[1]+''';"';
+  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  Parameter := '-uroot -p'''+DBParameterPage.Values[1]+''' -e "ALTER USER ''root''@''127.0.0.1'' IDENTIFIED BY '''+DBParameterPage.Values[1]+''';"';
+  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  Parameter := '-uroot -p'''+DBParameterPage.Values[1]+''' -e "FLUSH PRIVILEGES";';
+  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 procedure CurPageChanged(CurPageID: Integer);
@@ -167,10 +187,9 @@ begin
     FileReplaceString(ExpandConstant('{app}\my.ini'), '<<SERVICE_NAME>>', ExpandConstant('{#DBServiceName}'));
     FileReplaceString(ExpandConstant('{app}\my.ini'), '<<SERVICE_PORT>>', DBParameterPage.Values[0]);
 
-    // TODO: fix updater
-    // if not DirExists(ExpandConstant('{#DBDataDirectory}')) then InitializeData;
     InitializeData;
     InstallApplicationService;
+    ConfigureDatabaseRootPassword;
 
     WizardForm.StatusLabel.Caption := 'Creating firewall exception...';
     FirewallAdd('{#AppName}', DBParameterPage.Values[0]);
