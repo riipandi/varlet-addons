@@ -48,7 +48,7 @@ const
 var
   ResultCode: Integer;
   InstallPath : string;
-  // Parameter : String;
+  Str : String;
 
 // #######################################################################################
 // nt based service utilities
@@ -356,11 +356,6 @@ begin
     Exec('sc.exe', 'delete "' + ServiceName + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
-function GetAppPath(Param: string): string;
-begin
-  Result := InstallPath;
-end;
-
 function GetAppRegistry(Key: string): string;
 var val: string;
 begin
@@ -377,9 +372,14 @@ begin
   end;
 end;
 
-function VCRedistNotInstalled: Boolean;
+function GetAppPath(Param: string): string;
 begin
-  Result := not RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0');
+  Result := InstallPath;
+end;
+
+function VCRedistNotInstalled(version: string): Boolean;
+begin
+  Result := not RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\' + version);
 end;
 
 function FrameworkNotInstalled: Boolean;
@@ -430,6 +430,48 @@ begin
   if StringChangeEx(StringPath, '\', '/', True) > 0 then begin;
     result := StringPath;
   end;
+end;
+
+function IsAppRunning(const FileName : string): Boolean;
+var
+    FSWbemLocator: Variant;
+    FWMIService   : Variant;
+    FWbemObjectSet: Variant;
+begin
+    Result := false;
+    FSWbemLocator := CreateOleObject('WBEMScripting.SWBEMLocator');
+    FWMIService := FSWbemLocator.ConnectServer('', 'root\CIMV2', '', '');
+    FWbemObjectSet :=
+      FWMIService.ExecQuery(
+        Format('SELECT Name FROM Win32_Process Where Name="%s"', [FileName]));
+    Result := (FWbemObjectSet.Count > 0);
+    FWbemObjectSet := Unassigned;
+    FWMIService := Unassigned;
+    FSWbemLocator := Unassigned;
+end;
+
+function VCRedist2012NotInstalled: Boolean;
+begin
+  Result := not RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\12.0');
+end;
+
+function VCRedist2015NotInstalled: Boolean;
+begin
+  Result := not RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0');
+end;
+
+procedure CreateEnvironmentVariable(Key: string; Value: string);
+begin
+  if RegWriteStringValue(HKEY_CURRENT_USER, EnvironmentKey, Key, Value)
+  then Log('Environment variable has been added')
+  else Log('Error while adding environment variable');
+end;
+
+procedure RemoveEnvironmentVariable(Key: string);
+begin
+  if RegDeleteKeyIncludingSubkeys(HKEY_CURRENT_USER, Key)
+  then Log('Environment variable has been removed')
+  else Log('Error while removing environment variable');
 end;
 
 procedure EnvAddPath(Path: string);
