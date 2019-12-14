@@ -142,13 +142,15 @@ procedure ConfigureDatabaseRootPassword;
 var Parameter: String;
 begin
   WizardForm.StatusLabel.Caption := 'Resetting database root password...';
-  Exec(ExpandConstant('net.exe'), 'stop {#DBServiceName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  if IsAppRunning('mysqld.exe') then TaskKillByPid('mysqld.exe');
-  Str := 'SET PASSWORD FOR ''root''@''localhost'' = PASSWORD('''+DBParameterPage.Values[1]+''');';
-  SaveStringToFile(ExpandConstant('{tmp}\mysql_init.txt'), Str, True);
-  Parameter := '--defaults="'+ExpandConstant('{app}\my.ini')+'" --init-file="'+ExpandConstant('{tmp}\mysql_init.txt')+'"';
-  Exec(ExpandConstant('{app}\bin\mysqld.exe'), Parameter, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Exec(ExpandConstant('net.exe'), 'start {#DBServiceName}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  Parameter := '-uroot -e "set password for ''root''@''localhost'' = password('''+DBParameterPage.Values[1]+''');"';
+  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+
+  Parameter := '-uroot -p'''+DBParameterPage.Values[1]+''' -e "set password for ''root''@''127.0.0.1'' = password('''+DBParameterPage.Values[1]+''');"';
+  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+
+  Parameter := '-uroot -p'''+DBParameterPage.Values[1]+''' -e "FLUSH PRIVILEGES";';
+  Exec(ExpandConstant('{app}\bin\mysql.exe'), Parameter, '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
 end;
 
 procedure CurPageChanged(CurPageID: Integer);
